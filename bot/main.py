@@ -76,6 +76,7 @@ def setup_logging(settings: Settings) -> None:
     logging.basicConfig(level=logging.INFO, handlers=[console, file])
     # Библиотеки пишут каждый HTTP-запрос — это лишний шум
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
     logging.getLogger("apscheduler").setLevel(logging.WARNING)  # иначе пишет о каждой проверке
 
 
