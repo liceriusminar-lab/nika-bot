@@ -76,7 +76,8 @@ cp .env.example .env                           # и заполнить токе�
 ```
 
 Подробно, с получением токена и ключей и выбором модели — в [docs/setup.md](docs/setup.md).
-Запуск на сервере через Docker — в [docs/deploy.md](docs/deploy.md).
+Запуск на сервере через Docker — в [docs/deploy.md](docs/deploy.md),
+на старом Android-телефоне через Termux — в [docs/android.md](docs/android.md).
 
 ## Команды
 
