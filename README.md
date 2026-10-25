@@ -1,3 +1,15 @@
+<p align="center">
+  <img src="docs/banner.svg" alt="Nika — Telegram-бот, виртуальная подруга" width="100%">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12-6f42c1?style=flat-square&logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/aiogram-3-7c3aed?style=flat-square&logo=telegram&logoColor=white" alt="aiogram 3">
+  <img src="https://img.shields.io/badge/SQLite-FTS5-8b5cf6?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/docker-ready-9d4edd?style=flat-square&logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/LLM-OpenAI--compatible-5a189a?style=flat-square" alt="OpenAI-compatible LLM">
+</p>
+
 # Nika
 
 Личный Telegram-бот — виртуальная подруга Ника. Переписывается как живой человек, помнит, о чём мы говорили,
