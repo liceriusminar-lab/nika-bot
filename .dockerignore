@@ -1,0 +1,11 @@
+# Не тащим в образ лишнее и секретное (.env подключается при запуске, а не вшивается в образ)
+.env
+.venv
+.venv*
+data
+tests
+tools/image_test
+tools/*.html
+**/__pycache__
+.pytest_cache
+*.tar.gz

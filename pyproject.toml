@@ -1,0 +1,5 @@
+# Только настройки инструментов. Зависимости — в requirements.txt
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Асинхронные тесты (async def test_...) запускаются автоматически
+asyncio_mode = "auto"

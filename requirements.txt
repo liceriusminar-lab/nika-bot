@@ -1,0 +1,15 @@
+# Точные версии — чтобы на ПК и на сервере стояло одно и то же
+aiogram==3.31.0
+openai==3.36.1
+# HTTP-запросы: баланс, рисование картинок у Polza
+httpx==0.28.1
+aiosqlite==0.22.1
+APScheduler==3.11.3
+pydantic-settings==2.16.1
+PyYAML==6.0.3
+# База часовых поясов (в минимальном Linux-образе её может не быть)
+tzdata==2026.5
+# Прокси для Telegram (SOCKS5), если API Telegram недоступен напрямую
+aiohttp-socks==0.12.0
+pytest==9.1.1
+pytest-asyncio==1.4.0

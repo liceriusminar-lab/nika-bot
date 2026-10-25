@@ -1,0 +1,21 @@
+# Запуск на сервере (из папки проекта):
+#   docker compose up -d --build     — собрать и запустить в фоне
+#   docker compose logs -f --tail 100 — смотреть логи (выход — Ctrl+C)
+#   docker compose restart            — перезапустить
+#   docker compose down               — остановить
+services:
+  nika:
+    build: .
+    container_name: nika
+    # Перезапускать при падении и после перезагрузки сервера (пока сам не остановишь)
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # База, логи, картинки и бэкапы лежат на сервере в ./data и переживают пересборку
+      - ./data:/app/data
+    logging:
+      # Логи Docker не растут бесконечно: 3 файла по 10 МБ
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

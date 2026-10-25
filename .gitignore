@@ -1,0 +1,19 @@
+﻿# Секретные ключи
+.env
+
+# База данных, картинки, логи
+data/*
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Бэкапы, скачанные с сервера
+server_backups/
+
+# Отчёты compare_models.py и пробные картинки
+tools/*.html
+tools/image_test/
