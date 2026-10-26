@@ -36,10 +36,18 @@ curl -fsSL https://raw.githubusercontent.com/liceriusminar-lab/nika-bot/main/too
 ## Если Telegram не открывается
 
 В России API Telegram бывает заблокирован, и бот на телефоне не может до него достучаться.
-VPN на весь телефон не всегда подходит: агрегатор нейросетей может не пускать зарубежные адреса.
-Поэтому есть отдельный скрипт: он ставит в Termux [ByeDPI](https://github.com/hufrea/byedpi) (обход блокировки
-без VPN и без root), сам подбирает рабочие параметры и пускает через него только запросы бота к Telegram.
-VPN на телефоне перед запуском выключить:
+Проверка связи в конце установки тогда показывает ❌ у Telegram.
+
+**VPN с маршрутизацией (так работает у меня).** Обычный VPN на весь телефон не подходит: Telegram откроется,
+зато перестанет отвечать агрегатор — Polza не пускает зарубежные адреса. Нужно, чтобы через VPN шло всё,
+кроме агрегатора. В [Happ](https://www.happ.su/main/dev-docs/routing.md) это профиль маршрутизации с
+`"GlobalProxy": "true"` и `"DirectSites": ["domain:polza.ai"]`; в других клиентах (v2rayNG, Hiddify и т.п.)
+то же самое — правило «polza.ai → напрямую». После этого VPN-клиенту стоит включить «Постоянную VPN»
+в настройках Android, чтобы он поднимался после перезагрузки.
+
+**Без VPN — ByeDPI.** Если блокировка простая, хватит [ByeDPI](https://github.com/hufrea/byedpi) прямо в Termux,
+без VPN и без root. Скрипт сам его поставит, подберёт параметры и пустит через него только запросы бота
+к Telegram (VPN на время запуска выключить). У моего провайдера ни один вариант не сработал, но попробовать стоит:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/liceriusminar-lab/nika-bot/main/tools/android/telegram-bypass.sh | bash
