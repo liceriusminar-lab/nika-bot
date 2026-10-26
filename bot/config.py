@@ -24,7 +24,8 @@ def _split_list(value: str) -> list[str]:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
-        env_file_encoding="utf-8",
+        # utf-8-sig — понимает и файл, сохранённый Блокнотом с меткой BOM в начале
+        env_file_encoding="utf-8-sig",
         # Имена в .env пишутся БОЛЬШИМИ буквами, а здесь — маленькими; так можно
         case_sensitive=False,
         # Лишние строки в .env не считаются ошибкой

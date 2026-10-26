@@ -66,6 +66,21 @@ if [ -f "$DL/nika.db" ]; then
   echo "nika.db → data/nika.db"
 fi
 
+say "Проверяю файл настроек"
+ENV_FILE="$APP/.env"
+[ -f "$ENV_FILE" ] || { echo "Файла настроек нет. Положи nika.env в «Загрузки» и запусти скрипт снова."; exit 1; }
+# Блокнот в Windows мог сохранить метку кодировки (BOM) и переводы строк CRLF — убираем
+sed -i '1s/^\xEF\xBB\xBF//; s/\r$//' "$ENV_FILE"
+size=$(stat -c%s "$ENV_FILE")
+keys=$(grep -cE '^[A-Z_]+=' "$ENV_FILE" || true)
+echo "Файл настроек: $size байт, строк с настройками: $keys"
+if ! grep -qE '^TELEGRAM_BOT_TOKEN=[0-9]+:.+' "$ENV_FILE" || ! grep -qE '^OWNER_TELEGRAM_ID=[0-9]+' "$ENV_FILE"; then
+  echo "В файле нет TELEGRAM_BOT_TOKEN или OWNER_TELEGRAM_ID — похоже, nika.env скопировался не целиком."
+  echo "Скопируй nika.env в «Загрузки» заново (дождись конца копирования) и запусти скрипт ещё раз."
+  rm -f "$ENV_FILE"
+  exit 1
+fi
+
 say "Библиотеки Python (первый раз — несколько минут)"
 proot-distro login ubuntu -- bash -c \
   "cd /root/nika && { [ -x .venv/bin/python ] || python3 -m venv .venv; } && .venv/bin/pip install -q --upgrade pip && .venv/bin/pip install -q -r requirements.txt"
