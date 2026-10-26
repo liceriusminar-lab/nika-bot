@@ -17,7 +17,7 @@ from bot.memory.facts import CATEGORY_TITLES, facts_for_context
 from bot.memory.her_life import format_events, her_life_for_context
 from bot.memory.store import Fact, Scene, Store, StoredMessage
 from bot.memory.updater import MemoryUpdater
-from bot.persona import build_system_prompt, build_time_note
+from bot.persona import build_stage_note, build_system_prompt, build_time_note
 from bot.relationship import STAGE_ORDER, RelationshipTracker
 from bot.roleplay import (
     OOC_NOTE,
@@ -141,6 +141,8 @@ class Dialogue:
                 messages.append({"role": role, "content": m.as_text()})
 
         notes = [build_time_note(now)]
+        if mode == "chat":
+            notes.append(build_stage_note(stage))
         if relevant or relevant_events:
             hint = ["Может пригодиться в ответе (используй, только если к месту):"]
             if relevant:
@@ -152,7 +154,7 @@ class Dialogue:
             logger.warning("Похоже на кризисное сообщение — Ника получает особую инструкцию")
             notes.append(CRISIS_NOTE)
         if self.images is not None and mode == "chat":  # в ролевой сцене картинок не шлём
-            notes.append(await self.images.availability_note())
+            notes.append(await self.images.availability_note(stage))
         if extra_note:
             notes.append(extra_note)
 

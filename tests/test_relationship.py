@@ -141,6 +141,26 @@ async def test_behaviour_changes_by_stage(store, level, interest, expected, erp)
     assert ("уместны: поддерживай их охотно" in prompt) == erp
 
 
+async def test_close_stage_does_not_act_like_strangers(store):
+    tracker, _ = make_tracker(store)
+    await store.set_setting(KEY_FIXED, "romance")
+    dialogue = Dialogue(make_settings(), PERSONA, store, router=None, relationship=tracker)
+    await store.add_message("user", "покажи себя)", NOW)
+    messages = await dialogue.build_messages(await store.recent_messages(5))
+    assert "не торопит события" not in messages[0]["content"]   # «тормоз» из persona.yaml — только в начале
+    assert "Ваши отношения сейчас: «романтика»" in messages[-1]["content"]  # напоминание в конце запроса
+    assert "вы сблизились" in messages[-1]["content"]
+
+
+async def test_early_stage_keeps_slow_development(store):
+    tracker, _ = make_tracker(store)
+    dialogue = Dialogue(make_settings(), PERSONA, store, router=None, relationship=tracker)
+    await store.add_message("user", "привет", NOW)
+    messages = await dialogue.build_messages(await store.recent_messages(5))
+    assert "не торопит события" in messages[0]["content"]
+    assert "вы сблизились" not in messages[-1]["content"]
+
+
 async def test_status_is_human_without_numbers(store):
     tracker, _ = make_tracker(store)
     await store.set_setting(KEY_LEVEL, "57")
