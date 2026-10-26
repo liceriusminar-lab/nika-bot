@@ -34,10 +34,17 @@ async def check_telegram(settings) -> bool:
 
 
 async def check_aggregator(settings) -> bool:
-    provider = OpenAICompatibleProvider(settings.chat_base_url, settings.chat_api_key)
+    # Короткий таймаут: при проверке не нужно ждать минутами, как при обычной работе
+    provider = OpenAICompatibleProvider(settings.chat_base_url, settings.chat_api_key, timeout=20)
     start = time.perf_counter()
-    if not await provider.ping():
-        print(f"❌ Агрегатор {settings.chat_base_url} недоступен или ключ неверный")
+    try:
+        alive = await asyncio.wait_for(provider.ping(), timeout=30)
+    except TimeoutError:
+        alive = False
+    if not alive:
+        print(f"❌ Агрегатор {settings.chat_base_url} не отвечает или ключ неверный")
+        print("   Если включён VPN — возможно, агрегатор не пускает зарубежные адреса: "
+              "его надо пускать мимо VPN, а через обход — только Telegram.")
         return False
     balance = await provider.get_balance()
     extra = f", баланс {balance:.2f} ₽" if balance is not None else ""
