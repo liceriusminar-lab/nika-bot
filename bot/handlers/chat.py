@@ -1,4 +1,4 @@
-"""Обработка обычных сообщений: сохраняем, ждём, пока я допишу, отвечаем как Ника."""
+"""Текстовые сообщения и отправка ответов."""
 
 import asyncio
 import logging
@@ -33,20 +33,19 @@ START_AGAIN = "Он снова нажал /start. Просто поздоров�
 
 
 class Replier:
-    """Отправляет ответы Ники «по-человечески»: пауза, «печатает...», несколько сообщений."""
+    """Генерирует ответ и отправляет его с паузами и «печатает…»."""
 
     def __init__(self, bot: Bot, chat_id: int, dialogue: Dialogue) -> None:
         self.bot = bot
         self.chat_id = chat_id
         self.dialogue = dialogue
         self.debouncer = Debouncer(self.reply)
-        self._lock = asyncio.Lock()  # два ответа одновременно не генерируем
+        self._lock = asyncio.Lock()
 
     async def reply(self, extra_note: str | None = None, silent_errors: bool = False,
                     ooc: bool = False) -> str | None:
-        """Генерирует и отправляет ответ. Возвращает его текст (None — ничего не отправлено).
-        silent_errors — не писать «подвисла» при сбое (когда Ника пишет первой, я ничего не ждал);
-        ooc — ответ точно вне ролевой игры."""
+        """Возвращает отправленный текст или None.
+        silent_errors — не писать «подвисла», если ответа никто не ждал (Ника пишет первой)."""
         async with self._lock:
             return await self._reply(extra_note, silent_errors, ooc)
 
@@ -64,7 +63,7 @@ class Replier:
             return None
 
         for i, part in enumerate(split_parts(reply.text, reply.mode)):
-            if i > 0:  # перед первой частью «печатала», пока шла генерация
+            if i > 0:
                 async with ChatActionSender.typing(bot=self.bot, chat_id=self.chat_id):
                     await asyncio.sleep(typing_delay(part))
             await self.bot.send_message(self.chat_id, part)
@@ -96,12 +95,10 @@ async def on_text(message: Message, replier: Replier, sleep: SleepTracker, rolep
     now = replier.dialogue.now()
     store = replier.dialogue.store
     text = message.text
-    # «спокойной ночи» / «доброе утро» и просто факт, что я пишу — для определения сна
     await sleep.on_user_message(text, now)
 
     rp = await roleplay.get()
     if rp.state in ("scene", "ooc", "setup") and is_stop(text):
-        # «стоп» — сразу и без вопросов
         await store.add_message("user", text, now)
         await roleplay.stop()
         await message.answer(STOP_TEXT)
@@ -111,22 +108,21 @@ async def on_text(message: Message, replier: Replier, sleep: SleepTracker, rolep
     if rp.state == "":
         entry = detect_entry(text)
         scene = await roleplay.last_unfinished_scene() if entry == "continue" else None
-        if scene is not None:  # «давай продолжим нашу историю»
+        if scene is not None:
             await store.add_message("user", text, now)
             await roleplay.resume(scene.id)
             await replier.reply(RESUME_NOTE.format(title=scene.title))
             return
-        if entry is not None:  # «го поиграем в ролевку?» — начинаем договариваться
+        if entry is not None:
             await roleplay.start_setup()
 
-    # Внутри сцены сообщения — ролевые, кроме ((вне роли))
     in_scene = rp.state == "scene" and not is_ooc_text(text)
     await store.add_message("user", text, now, mode="rp" if in_scene else "chat",
                             scene_id=rp.scene.id if in_scene else None)
-    replier.debouncer.poke()  # ответ придёт, когда я перестану писать
+    replier.debouncer.poke()
 
 
 @router.message()
 async def not_text(message: Message) -> None:
-    # Стикеры, голосовые, видео и т.п. пока не поддерживаются (фото — в handlers/photo.py)
+    # стикеры, голосовые и т.п. пока не поддерживаются
     await message.answer("ой, у меня это не открывается(( напиши текстом?")

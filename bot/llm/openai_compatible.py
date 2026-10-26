@@ -1,7 +1,4 @@
-"""Разговор через любой OpenAI-совместимый API (Polza.ai, VseGPT, Ollama...).
-
-Провайдер меняется строками CHAT_BASE_URL и CHAT_API_KEY в .env.
-"""
+"""Любой OpenAI-совместимый API (Polza, VseGPT, Ollama…)."""
 
 import asyncio
 import logging
@@ -60,7 +57,6 @@ class OpenAICompatibleProvider(ChatProvider):
                 extra_body=self.extra_body,
             )
         except openai.APIError as e:
-            # Сюда попадают и сетевые ошибки, и ответы вида "нет денег" / "модель не найдена"
             raise LLMError(f"{model}: {e}", kind=_error_kind(e)) from e
 
         if not response.choices:

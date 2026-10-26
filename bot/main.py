@@ -1,8 +1,4 @@
-"""Точка входа: запуск бота.
-
-Запуск из корня проекта:
-    python -m bot.main
-"""
+"""Запуск: python -m bot.main"""
 
 import asyncio
 import logging
@@ -41,7 +37,6 @@ from bot.sleep import SleepTracker
 
 logger = logging.getLogger("bot")
 
-# Меню команд в Telegram (кнопка «/» рядом с полем ввода)
 BOT_COMMANDS = [
     BotCommand(command="sleep", description="я ухожу спать"),
     BotCommand(command="wake", description="я проснулся"),
@@ -60,24 +55,18 @@ BOT_COMMANDS = [
 
 
 def setup_logging(settings: Settings) -> None:
-    """Логи пишутся в консоль и в data/logs/bot.log (файл не растёт бесконечно)."""
     log_dir = settings.data_dir / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-
     console = logging.StreamHandler(sys.stdout)
     console.setFormatter(fmt)
-
-    # До 5 файлов по 1 МБ, самые старые удаляются
     file = RotatingFileHandler(log_dir / "bot.log", maxBytes=1_000_000, backupCount=5, encoding="utf-8")
     file.setFormatter(fmt)
-
     logging.basicConfig(level=logging.INFO, handlers=[console, file])
-    # Библиотеки пишут каждый HTTP-запрос — это лишний шум
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("httpx2").setLevel(logging.WARNING)
-    logging.getLogger("apscheduler").setLevel(logging.WARNING)  # иначе пишет о каждой проверке
+
+    for noisy in ("httpx", "httpx2", "apscheduler"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
 def make_providers(settings: Settings) -> tuple[OpenAICompatibleProvider, OpenAICompatibleProvider | None]:
@@ -91,7 +80,6 @@ def make_providers(settings: Settings) -> tuple[OpenAICompatibleProvider, OpenAI
 
 
 def make_telegram_session(settings: Settings) -> AiohttpSession:
-    """Обычно — прямое соединение. Если на сервере API Telegram недоступен — прокси или свой релей."""
     api = TelegramAPIServer.from_base(settings.telegram_api_url) if settings.telegram_api_url else PRODUCTION
     if settings.telegram_proxy:
         logger.info("Telegram через прокси")
@@ -131,10 +119,9 @@ async def run(settings: Settings) -> None:
     sleep = SleepTracker(store)
     timings = TEST if settings.proactive_test_mode else NORMAL
     proactive = Proactive(store, sleep, llm_router, replier, settings.proactive_per_day, timings)
-    # Планировщик: раз в ~20 минут (в тестовом режиме — раз в минуту) проверяет, не написать ли первой.
-    # jitter — случайный сдвиг, чтобы проверки не шли как часы
+
+    # именно async def: лямбду, возвращающую корутину, APScheduler запустил бы в отдельном потоке
     async def proactive_tick() -> None:
-        # Именно async-функция: так APScheduler запустит её в цикле бота, а не в отдельном потоке
         await proactive.check(datetime.now(settings.tz))
 
     scheduler = AsyncIOScheduler(timezone=settings.tz)
@@ -144,26 +131,22 @@ async def run(settings: Settings) -> None:
     if settings.proactive_test_mode:
         logger.warning("ТЕСТОВЫЙ РЕЖИМ «пишет первой»: интервалы в минутах вместо часов")
 
-    # Ежедневный бэкап базы в 04:30, хранятся 7 последних копий
     backups_dir = settings.data_dir / "backups"
 
     async def backup_tick() -> None:
         try:
             await make_backup(store, backups_dir, now())
-        except Exception:  # noqa: BLE001 — сбой бэкапа не должен ронять бота
+        except Exception:  # noqa: BLE001
             logger.exception("Бэкап не удался")
 
     scheduler.add_job(backup_tick, CronTrigger(hour=4, minute=30), max_instances=1, coalesce=True)
     await backup_if_missing(store, backups_dir, now())
 
-    # Эти объекты aiogram сам передаст в обработчики по имени параметра
     dp = Dispatcher(settings=settings, store=store, llm_router=llm_router, replier=replier, memory=memory,
                     sleep=sleep, proactive=proactive, images=images, relationship=relationship,
                     roleplay=roleplay)
-    # Пропускаем к обработчикам только сообщения владельца
     dp.update.outer_middleware(OwnerOnlyMiddleware(settings.owner_telegram_id))
-    # Команды — раньше обычного чата, иначе «/stats» уйдёт Нике как текст.
-    # Фото — раньше чата, там последний обработчик ловит всё, что не текст
+    # порядок важен: в chat.router последний хендлер ловит всё подряд
     dp.include_router(commands.router)
     dp.include_router(photo.router)
     dp.include_router(chat.router)
@@ -187,10 +170,9 @@ def main() -> None:
     try:
         settings = get_settings()
     except ValidationError as e:
-        # Самая частая ошибка новичка — не заполнен .env. Объясняем по-человечески.
         missing = ", ".join(str(err["loc"][0]).upper() for err in e.errors())
         print(f"Ошибка в настройках (.env): проверь поля {missing}")
-        print("Подсказка: скопируй .env.example в .env и заполни значения.")
+        print("Если .env ещё нет — скопируй .env.example и заполни.")
         sys.exit(1)
 
     setup_logging(settings)

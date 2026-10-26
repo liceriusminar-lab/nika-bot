@@ -1,4 +1,4 @@
-"""Служебные команды. Ника на них не отвечает «в образе» — это панель управления."""
+"""Служебные команды (отвечают не «в образе»)."""
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
@@ -38,8 +38,7 @@ router = Router(name="commands")
 
 @router.message(Command("memory"))
 async def on_memory(message: Message, store: Store, memory: MemoryUpdater) -> None:
-    # Сначала дообработать свежие сообщения, чтобы список был актуальным
-    await memory.run(force=True)
+    await memory.run(force=True)  # чтобы в списке были и самые свежие факты
     facts = await store.all_facts()
     if not facts:
         await message.answer("пока я ничего особенного о тебе не запомнила — расскажи о себе)")
@@ -57,7 +56,7 @@ async def on_memory(message: Message, store: Store, memory: MemoryUpdater) -> No
         lines.append("\n📌 хочу потом спросить:")
         lines += [f"• {f.due_at:%d.%m %H:%M} — {f.text}" for f in followups]
 
-    for part in split_parts("\n".join(lines), mode="rp"):  # длинный список режется под лимит Telegram
+    for part in split_parts("\n".join(lines), mode="rp"):
         await message.answer(part)
 
 
@@ -105,7 +104,7 @@ async def on_reset_choice(callback: CallbackQuery, store: Store) -> None:
         text = "🧹 всё стёрто. можно начать знакомство заново: /start"
     else:
         text = "ок, ничего не трогаю"
-    await callback.message.edit_text(text)  # убираем кнопки, чтобы не нажать дважды
+    await callback.message.edit_text(text)
     await callback.answer()
 
 
@@ -192,7 +191,7 @@ async def on_settings_change(callback: CallbackQuery, store: Store, proactive: P
     try:
         await callback.message.edit_text(text, reply_markup=keyboard)
     except TelegramBadRequest:
-        pass  # нажали ту же кнопку — сообщение не изменилось, Telegram ругается, это нормально
+        pass  # "message is not modified" — нажали ту же кнопку
     await callback.answer("сохранено")
 
 
@@ -209,13 +208,13 @@ async def on_rp(message: Message, command: CommandObject, roleplay: RoleplayMana
     store, now = replier.dialogue.store, replier.dialogue.now()
     idea = (command.args or "").strip()
 
-    if rp.state == "ooc":  # возвращаемся в сцену
+    if rp.state == "ooc":
         scene = await roleplay.back_to_scene()
         await replier.reply(RESUME_NOTE.format(title=scene.title))
     elif rp.state == "scene":
         await message.answer(f"🎭 мы уже в сцене «{rp.scene.title}»\n"
                              "/ooc — выйти из роли, /end — закончить, /stop или «стоп» — остановить")
-    elif rp.state == "setup":  # /rp во время обсуждения = «начинаем прямо сейчас»
+    elif rp.state == "setup":  # /rp во время обсуждения = «начинай уже»
         if idea:
             await store.add_message("user", idea, now)
         created = await roleplay.check_setup(force=True)
@@ -227,7 +226,7 @@ async def on_rp(message: Message, command: CommandObject, roleplay: RoleplayMana
                                                     characters=scene.characters, opening=opening))
     else:
         await roleplay.start_setup()
-        if idea:  # «/rp фэнтези, я наёмник» — сразу с идеей
+        if idea:
             await store.add_message("user", f"давай поиграем в ролевую: {idea}", now)
             replier.debouncer.poke()
         else:
@@ -241,7 +240,7 @@ async def on_ooc(message: Message, command: CommandObject, roleplay: RoleplayMan
         await message.answer("сейчас мы не играем) начать — /rp")
         return
     text = (command.args or "").strip()
-    if text:  # «/ooc как дела?» — одно сообщение вне роли, сцена продолжается
+    if text:  # /ooc с текстом — одна реплика вне роли
         await replier.dialogue.store.add_message("user", f"(({text}))", replier.dialogue.now())
         replier.debouncer.poke()
         return
@@ -307,7 +306,6 @@ _MONTHS = ["январь", "февраль", "март", "апрель", "май
 
 
 def _tokens(n: int) -> str:
-    """12345 -> '12 тыс.', 1234567 -> '1.2 млн'"""
     if n >= 1_000_000:
         return f"{n / 1_000_000:.1f} млн"
     if n >= 1000:
@@ -336,7 +334,7 @@ async def on_stats(message: Message, store: Store, llm_router: LLMRouter, settin
         for u in usage:
             cache = f", из кэша {u.cached_tokens / u.input_tokens * 100:.0f}%" if u.input_tokens and u.cached_tokens else ""
             name = u.model.split('/')[-1]
-            if not u.input_tokens and not u.output_tokens:  # модели рисования считаются штуками
+            if not u.input_tokens and not u.output_tokens:  # картинки
                 lines.append(f"• {name} — {u.requests} картинок — {u.cost_rub:.2f} ₽")
             else:
                 lines.append(f"• {name} — {u.requests} запр., {_tokens(u.input_tokens)} вход / "

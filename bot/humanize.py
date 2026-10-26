@@ -1,6 +1,4 @@
-"""Поведение «как живой человек»: чистка текста, разбивка на сообщения, паузы,
-«печатает...» и ожидание, пока я допишу несколько сообщений подряд.
-"""
+"""Чистка ответа, разбивка на сообщения, паузы и ожидание, пока я допишу."""
 
 import asyncio
 import logging
@@ -86,9 +84,9 @@ class Debouncer:
         self.action = action
         self.delay = delay
         self._timer: asyncio.Task | None = None
-        self._waiting = False      # таймер ещё «спит» — его можно перезапустить
-        self._lock = asyncio.Lock()  # ответы идут строго по одному
-        self._tasks: set[asyncio.Task] = set()  # держим ссылки, чтобы задачи не удалил сборщик мусора
+        self._waiting = False  # таймер ещё спит — можно перезапустить
+        self._lock = asyncio.Lock()
+        self._tasks: set[asyncio.Task] = set()  # иначе задачу может собрать GC
 
     def poke(self) -> None:
         """Вызывать на каждое моё сообщение."""

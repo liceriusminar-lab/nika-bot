@@ -1,13 +1,6 @@
-"""Сравнение моделей: какая лучше играет Нику.
+"""Прогоняет тестовые реплики через несколько моделей и сохраняет ответы в HTML-таблицу.
 
-Прогоняет 12 тестовых реплик через несколько моделей с системным промптом Ники
-и сохраняет ответы в HTML-таблицу — открываешь в браузере и сравниваешь.
-
-Запуск из корня проекта:
-    .\\.venv\\Scripts\\python.exe -m tools.compare_models
-Свой набор моделей (ID через запятую, как на polza.ai/models):
-    .\\.venv\\Scripts\\python.exe -m tools.compare_models --models deepseek/deepseek-v4-flash,qwen/qwen3-32b
-"""
+    python -m tools.compare_models [--models a,b,c]"""
 
 import argparse
 import asyncio

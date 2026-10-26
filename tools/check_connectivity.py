@@ -1,10 +1,7 @@
-"""Проверка, что с этой машины доступны Telegram и агрегатор нейросетей.
+"""Доступны ли с этой машины Telegram и агрегатор.
 
-На ПК:
-    .\\.venv\\Scripts\\python.exe -m tools.check_connectivity
-На сервере (бот при этом может работать):
-    docker compose run --rm nika python -m tools.check_connectivity
-"""
+    python -m tools.check_connectivity
+    docker compose run --rm nika python -m tools.check_connectivity"""
 
 import asyncio
 import sys

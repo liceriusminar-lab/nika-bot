@@ -1,11 +1,7 @@
-"""Сборка запроса к нейросети и получение ответа Ники.
+"""Сборка запроса к модели.
 
-Порядок частей в запросе важен для кэша провайдера — сначала то, что меняется реже:
-1. системный промпт (характер) — почти не меняется;
-2. блок памяти: важные факты, сводка, её недавняя жизнь — меняется раз в ~10 сообщений;
-3. последние ~20 сообщений;
-4. в самом конце — то, что меняется каждый раз: время, факты по текущей теме, особые инструкции.
-"""
+Порядок подобран под кэш провайдера: персона → память → история, а всё, что
+меняется каждый раз (время, факты по теме, подсказки), — в самом конце."""
 
 import logging
 import re
@@ -35,7 +31,7 @@ from bot.roleplay import (
 
 logger = logging.getLogger(__name__)
 
-HISTORY_LIMIT = 20  # сколько последних сообщений идёт в запрос целиком
+HISTORY_LIMIT = 20
 
 # Стадия, если трекер отношений не подключён (в тестах)
 DEFAULT_STAGE = "acquaintances"
@@ -237,9 +233,9 @@ class Dialogue:
         logger.info("Ответ от %s (%s): %d→%d ток. (кэш %d)%s", result.model, mode, result.input_tokens,
                     result.output_tokens, result.cached_tokens, f", картинка: {image}" if image else "")
         if self.memory is not None:
-            self.memory.schedule()  # обновить память в фоне, не задерживая ответ
+            self.memory.schedule()
         if self.relationship is not None:
-            self.relationship.schedule()  # и, если пора, оценить отношения
+            self.relationship.schedule()
         if mode == "rp" and self.roleplay is not None:
-            self.roleplay.schedule_summary(scene.id)  # длинную сцену сворачиваем в краткое содержание
+            self.roleplay.schedule_summary(scene.id)
         return Reply(text, image, mode)

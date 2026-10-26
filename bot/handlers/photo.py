@@ -1,4 +1,4 @@
-"""Мои фото: распознаём, сохраняем описание в истории, Ника отвечает как обычно."""
+"""Входящие фото: описание через vision-модель, дальше как обычное сообщение."""
 
 import logging
 
@@ -14,16 +14,15 @@ logger = logging.getLogger(__name__)
 
 router = Router(name="photo")
 
-MAX_DOCUMENT_BYTES = 10 * 1024 * 1024  # картинки, присланные файлом, — не больше 10 МБ
+MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
 
 
 async def _handle_image(message: Message, file_id: str, bot: Bot, replier: Replier,
                         images: ImageService, sleep: SleepTracker) -> None:
     now = replier.dialogue.now()
     caption = message.caption or ""
-    await sleep.on_user_message(caption, now)  # я пишу — значит не сплю
+    await sleep.on_user_message(caption, now)
 
-    # Пока фото распознаётся — Ника «печатает», как будто разглядывает
     async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
         data = await bot.download(file_id)
         description = await images.describe_photo(data.read(), caption)
@@ -31,12 +30,11 @@ async def _handle_image(message: Message, file_id: str, bot: Bot, replier: Repli
         logger.warning("Фото не удалось распознать")
 
     await replier.dialogue.store.add_message("user", caption, now, has_image=True, image_description=description)
-    replier.debouncer.poke()  # ответ — как на обычное сообщение, с ожиданием, вдруг я пришлю ещё
+    replier.debouncer.poke()
 
 
 @router.message(F.photo)
 async def on_photo(message: Message, bot: Bot, replier: Replier, images: ImageService, sleep: SleepTracker) -> None:
-    # Telegram присылает фото в нескольких размерах, последний — самый большой
     await _handle_image(message, message.photo[-1].file_id, bot, replier, images, sleep)
 
 
