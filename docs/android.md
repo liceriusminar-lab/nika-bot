@@ -33,6 +33,18 @@ curl -fsSL https://raw.githubusercontent.com/liceriusminar-lab/nika-bot/main/too
 Во время установки Android попросит доступ к файлам — разрешить. Первая установка занимает 10–20 минут
 (скачивается Ubuntu и библиотеки Python). В конце скрипт проверит связь с Telegram и агрегатором и запустит бота.
 
+## Если Telegram не открывается
+
+В России API Telegram бывает заблокирован, и бот на телефоне не может до него достучаться.
+VPN на весь телефон не всегда подходит: агрегатор нейросетей может не пускать зарубежные адреса.
+Поэтому есть отдельный скрипт: он ставит в Termux [ByeDPI](https://github.com/hufrea/byedpi) (обход блокировки
+без VPN и без root), сам подбирает рабочие параметры и пускает через него только запросы бота к Telegram.
+VPN на телефоне перед запуском выключить:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/liceriusminar-lab/nika-bot/main/tools/android/telegram-bypass.sh | bash
+```
+
 ## Управление
 
 | Команда в Termux | Что делает |

@@ -74,7 +74,12 @@ ubuntu "if [ -d /root/nika/.git ]; then git -C /root/nika pull --ff-only; else g
 
 say "Настройки и база"
 if [ -n "$ENV_SRC" ]; then
+  # Прокси для Telegram настраивается на самом телефоне (telegram-bypass.sh) — при замене настроек сохраняем его
+  KEEP_PROXY="$(ubuntu "grep -E '^TELEGRAM_PROXY=.+' /root/nika/.env 2>/dev/null || true")"
   ubuntu_put "$ENV_SRC" /root/nika/.env
+  if [ -n "$KEEP_PROXY" ] && ! ubuntu "grep -qE '^TELEGRAM_PROXY=.+' /root/nika/.env"; then
+    ubuntu "sed -i '/^TELEGRAM_PROXY=/d' /root/nika/.env; printf '\n%s\n' '$KEEP_PROXY' >> /root/nika/.env"
+  fi
   echo "настройки → /root/nika/.env"
 fi
 if [ -n "$DB_SRC" ]; then
