@@ -15,6 +15,9 @@
 #
 # Всё, что внутри Ubuntu, делается через `proot-distro login`, а не через путь к её папке:
 # у разных версий proot-distro этот путь разный.
+#
+# Скрипт легко переделать под любой свой бот на Python: поменять REPO, путь /root/nika
+# и команду запуска в nika-run.sh. Общая схема и грабли — docs/portable-server.md.
 set -euo pipefail
 # Ctrl+C прерывает установку целиком, а не только текущий шаг
 trap 'echo; echo "Установка прервана."; exit 130' INT
