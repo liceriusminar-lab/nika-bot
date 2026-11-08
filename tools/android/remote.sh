@@ -86,7 +86,9 @@ cat > "$HOME/remote-run.sh" <<EOF
 # Держит tailscaled запущенным: упал — перезапуск через 10 секунд.
 LOG="\$HOME/tailscaled.log"
 while true; do
-  proot-distro login --shared-tmp ubuntu -- tailscaled --tun=userspace-networking --statedir=$TS_DIR \\
+  # TS_DEBUG_MTU — пакеты поменьше: внутри VPN (Happ) пакеты обычного размера теряются
+  # и SSH зависает сразу после подключения
+  proot-distro login --shared-tmp ubuntu -- env TS_DEBUG_MTU=1100 tailscaled --tun=userspace-networking --statedir=$TS_DIR \\
     --socket=$TS_SOCK < /dev/null >> "\$LOG" 2>&1 &
   PID=\$!
   while kill -0 "\$PID" 2> /dev/null; do
