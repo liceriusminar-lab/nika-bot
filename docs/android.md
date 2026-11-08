@@ -67,3 +67,20 @@ Termux можно свернуть, но не смахивать из списк
 Если бот упадёт, `nika-run.sh` перезапустит его через 10 секунд, а после перезагрузки телефона его поднимет Termux:Boot.
 Ежедневные бэкапы базы лежат там же, где и на сервере, — в `data/backups/` внутри Ubuntu
 (`$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu/root/nika/data/backups`).
+
+## Доступ к телефону с компьютера (SSH)
+
+Домашний роутер часто не пускает соединения между устройствами в одной сети, так что `ssh` на адрес телефона
+в Wi-Fi не проходит. Обходится это через [Tailscale](https://tailscale.com): он работает в Termux без root
+и не занимает VPN в Android, поэтому Happ остаётся включённым. На компьютер ставится обычный клиент Tailscale
+и вход в тот же аккаунт.
+
+На телефоне, в кавычках — содержимое `~/.ssh/id_ed25519.pub` с компьютера (удобно переслать себе в «Избранное»
+в Telegram и скопировать оттуда):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/liceriusminar-lab/nika-bot/main/tools/android/remote.sh | bash -s -- "ssh-ed25519 AAAA..."
+```
+
+Скрипт поставит SSH-сервер и Tailscale, откроет страницу входа и в конце напишет команду для подключения —
+вида `ssh -p 8022 u0_a123@100.x.y.z`. Выключить — `~/remote-stop.sh`, включить снова — `~/remote-start.sh`.
