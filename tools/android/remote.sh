@@ -21,6 +21,9 @@ KEY="${1:-}"
 DL="$HOME/storage/downloads"
 HOSTNAME_TS="nika-phone"
 TS_DIR=/root/.tailscale
+# Сокет — в общей с Termux папке /tmp (--shared-tmp): путь к файлу внутри Ubuntu длиннее
+# 108 символов, а сокеты с путём длиннее Linux не создаёт
+TS_SOCK=/tmp/tailscaled.sock
 
 say() { printf '\n\033[1;35m== %s\033[0m\n' "$1"; }
 ubuntu() { proot-distro login ubuntu -- bash -c "$1" < /dev/null; }
@@ -74,7 +77,7 @@ say "Скрипты"
 # Команда tailscale прямо в Termux — сама сходит в Ubuntu
 cat > "$PREFIX/bin/tailscale" <<EOF
 #!/data/data/com.termux/files/usr/bin/bash
-exec proot-distro login ubuntu -- tailscale --socket=$TS_DIR/tailscaled.sock "\$@"
+exec proot-distro login --shared-tmp ubuntu -- tailscale --socket=$TS_SOCK "\$@"
 EOF
 chmod +x "$PREFIX/bin/tailscale"
 
@@ -83,8 +86,8 @@ cat > "$HOME/remote-run.sh" <<EOF
 # Держит tailscaled запущенным: упал — перезапуск через 10 секунд.
 LOG="\$HOME/tailscaled.log"
 while true; do
-  proot-distro login ubuntu -- tailscaled --tun=userspace-networking --statedir=$TS_DIR \\
-    --socket=$TS_DIR/tailscaled.sock < /dev/null >> "\$LOG" 2>&1 &
+  proot-distro login --shared-tmp ubuntu -- tailscaled --tun=userspace-networking --statedir=$TS_DIR \\
+    --socket=$TS_SOCK < /dev/null >> "\$LOG" 2>&1 &
   PID=\$!
   while kill -0 "\$PID" 2> /dev/null; do
     # лог больше 2 МБ — обнуляем
@@ -127,8 +130,8 @@ pkill -f remote-run.sh || true
 pkill -f tailscaled || true
 sleep 1
 "$HOME/remote-start.sh"
-for _ in $(seq 1 30); do ubuntu "test -S $TS_DIR/tailscaled.sock" && break; sleep 1; done
-if ! ubuntu "test -S $TS_DIR/tailscaled.sock"; then
+for _ in $(seq 1 60); do [ -S "$PREFIX/tmp/tailscaled.sock" ] && break; sleep 1; done
+if [ ! -S "$PREFIX/tmp/tailscaled.sock" ]; then
   echo "tailscaled не запустился. Последние строки лога:"; tail -n 20 "$HOME/tailscaled.log"; exit 1
 fi
 
